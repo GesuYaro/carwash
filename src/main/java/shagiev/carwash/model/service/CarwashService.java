@@ -26,6 +26,9 @@ public class CarwashService {
     @Column(name = "duration")
     private Duration duration;
 
+    @Column(name = "price")
+    private long price;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

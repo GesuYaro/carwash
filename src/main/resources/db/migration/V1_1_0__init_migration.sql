@@ -10,13 +10,15 @@ CREATE TABLE IF NOT EXISTS entry (
     carbox_id int,
     service_id int,
     date timestamp,
-    status varchar
+    status varchar,
+    price int
 );
 
 CREATE TABLE IF NOT EXISTS carwash_service (
     id int NOT NULL PRIMARY KEY,
     name varchar,
-    duration interval
+    duration interval,
+    price int
 );
 
 CREATE SEQUENCE IF NOT EXISTS carbox_seq START 1;
