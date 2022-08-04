@@ -27,7 +27,6 @@ public class CarwashServiceController {
 
     @PostMapping
     public CarwashServiceInfoDto save(@RequestBody CarwashServiceRequestDto requestDto) {
-        System.out.println(requestDto);
         return crudService.save(requestDto);
     }
 
