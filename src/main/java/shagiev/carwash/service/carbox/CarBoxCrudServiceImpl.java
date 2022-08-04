@@ -1,4 +1,4 @@
-package shagiev.carwash.service;
+package shagiev.carwash.service.carbox;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.ConversionService;
@@ -28,6 +28,16 @@ public class CarBoxCrudServiceImpl implements CarBoxCrudService {
     }
 
     @Override
+    public CarBoxInfoDto getConcrete(long id) {
+        var carBox = carBoxRepo.findById(id);
+        if (carBox.isPresent()) {
+            return conversionService.convert(carBox.get(), CarBoxInfoDto.class);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
     public CarBoxInfoDto save(CarBoxRequestDto carBoxRequestDto) {
         CarBox requestedCarBox = conversionService.convert(carBoxRequestDto, CarBox.class);
         if (requestedCarBox == null) {
@@ -36,4 +46,23 @@ public class CarBoxCrudServiceImpl implements CarBoxCrudService {
         CarBox carBox = carBoxRepo.save(requestedCarBox);
         return conversionService.convert(carBox, CarBoxInfoDto.class);
     }
+
+    @Override
+    public void delete(long id) {
+        carBoxRepo.deleteById(id);
+    }
+
+    @Override
+    public CarBoxInfoDto update(long id, CarBoxRequestDto carBoxRequestDto) {
+        CarBox requestedCarBox = conversionService.convert(carBoxRequestDto, CarBox.class);
+        if (requestedCarBox != null) {
+            requestedCarBox.setId(id);
+            if (carBoxRepo.existsById(id)) {
+                CarBox carBox = carBoxRepo.save(requestedCarBox);
+                return conversionService.convert(carBox, CarBoxInfoDto.class);
+            }
+        }
+        return null;
+    }
+
 }
