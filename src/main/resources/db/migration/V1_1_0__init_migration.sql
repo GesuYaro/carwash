@@ -1,24 +1,24 @@
 CREATE TABLE IF NOT EXISTS carbox (
-    id int NOT NULL PRIMARY KEY,
+    id bigint NOT NULL PRIMARY KEY,
     opening_time time,
     closing_time time,
     time_coefficient float
 );
 
 CREATE TABLE IF NOT EXISTS entry (
-    id int NOT NULL PRIMARY KEY,
-    carbox_id int,
-    service_id int,
+    id bigint NOT NULL PRIMARY KEY,
+    carbox_id bigint,
+    service_id bigint,
     date timestamp,
     status varchar,
-    price int
+    price bigint
 );
 
 CREATE TABLE IF NOT EXISTS carwash_service (
     id int NOT NULL PRIMARY KEY,
     name varchar,
-    duration interval,
-    price int
+    duration bigint,
+    price bigint
 );
 
 CREATE SEQUENCE IF NOT EXISTS carbox_seq START 1;
