@@ -3,10 +3,11 @@ package shagiev.carwash.service.availableinterval;
 import shagiev.carwash.dto.availableinterval.AvailableIntervalDto;
 import shagiev.carwash.model.availableinterval.AvailableInterval;
 
+import java.time.Duration;
 import java.util.List;
 
 public interface IntervalLinkerService {
 
-    List<AvailableIntervalDto> compose(List<AvailableInterval> availableIntervals);
+    List<AvailableIntervalDto> compose(List<AvailableInterval> availableIntervals, Duration baseDuration);
 
 }

@@ -5,6 +5,7 @@ import shagiev.carwash.dto.availableinterval.AvailableIntervalDto;
 import shagiev.carwash.model.availableinterval.AvailableInterval;
 
 import java.sql.Time;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -14,8 +15,12 @@ import java.util.List;
 public class IntervalLinkerServiceImpl implements IntervalLinkerService {
 
     @Override
-    public List<AvailableIntervalDto> compose(List<AvailableInterval> availableIntervals) {
+    public List<AvailableIntervalDto> compose(List<AvailableInterval> availableIntervals, Duration baseDuration) {
         List<AvailableIntervalDto> composed = new ArrayList<>();
+        availableIntervals.forEach(interval -> {
+            long duration = (long) (interval.getCarBox().getTimeCoefficient() * baseDuration.toMillis());
+            interval.setUntil(interval.getUntil() - duration);
+        });
         availableIntervals.sort(
                 Comparator.comparing(AvailableInterval::getFrom)
                 .thenComparing((i1, i2) -> Long.compare(i2.getUntil(), i1.getUntil()))

@@ -34,7 +34,7 @@ public class EnrollServiceImpl implements EnrollService {
     @Override
     public List<AvailableIntervalDto> getAvailableIntervals(Date date, long serviceId) {
         Duration baseDuration = carwashServiceCrudService.getConcrete(serviceId).getDuration();
-        return intervalLinkerService.compose(intervalsService.getAvailableIntervalsForDay(baseDuration, date));
+        return intervalLinkerService.compose(intervalsService.getAvailableIntervalsForDay(baseDuration, date), baseDuration);
     }
 
     @Override
