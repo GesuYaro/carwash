@@ -9,8 +9,8 @@ import shagiev.carwash.model.entry.Entry;
 @Mapper(componentModel = "spring")
 public interface EntryInfoDtoMapper extends Converter<Entry, EntryInfoDto> {
 
-    @Mapping(source = "carBox.id", target = "carboxId")
-    @Mapping(source = "carwashService.id", target = "serviceId")
-    EntryInfoDto convertToDto(Entry entry);
+    @Mapping(source = "entry.carBox.id", target = "carboxId")
+    @Mapping(source = "entry.carwashService.id", target = "serviceId")
+    EntryInfoDto convert(Entry entry);
 
 }

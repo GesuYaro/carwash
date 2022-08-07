@@ -9,7 +9,6 @@ import java.sql.Time;
 @AllArgsConstructor
 public class AvailableIntervalDto {
 
-    private long carboxId;
     private Time from;
     private Time until;
 

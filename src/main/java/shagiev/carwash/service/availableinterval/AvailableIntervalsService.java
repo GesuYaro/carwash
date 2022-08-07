@@ -8,7 +8,9 @@ import java.util.List;
 
 public interface AvailableIntervalsService {
 
-    List<AvailableInterval> getAvailableIntervals(Duration duration, Date date);
+    List<AvailableInterval> getAvailableIntervalsForDay(Duration baseDuration, Date date);
+
+    List<AvailableInterval> getIntervalsForConcreteTime(Duration baseDuration, Date date);
     void busyInterval(long id, Date from, Date until);
 
     void freeInterval(Date from, Date until, long carBoxId);

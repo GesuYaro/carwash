@@ -16,6 +16,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Deprecated
 public class EntryFinderImpl implements EntryFinder {
 
     private final EntryRepo entryRepo;

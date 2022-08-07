@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+@Deprecated
 public interface EntryFinder {
 
     Map<Long, List<Entry>> findEntriesByDay(Date date, EntryStatus[] entryStatuses);

@@ -9,7 +9,7 @@ import java.sql.Date;
 @AllArgsConstructor
 public class IntervalRequestDto {
 
-    private long carboxId;
+//    private long carboxId;
     private long serviceId;
     private Date date;
 

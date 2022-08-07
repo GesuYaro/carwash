@@ -15,6 +15,9 @@ import shagiev.carwash.repo.CarBoxRepo;
 import shagiev.carwash.repo.EntryRepo;
 import shagiev.carwash.service.exceptions.NoSuchIdException;
 
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Subquery;
 import java.time.Duration;
 import java.util.Calendar;
 import java.util.Date;
@@ -29,36 +32,74 @@ public class AvailableIntervalsServiceImpl implements AvailableIntervalsService 
     private final CarBoxRepo carBoxRepo;
 
     @Override
-    public List<AvailableInterval> getAvailableIntervals(Duration duration, Date date) {
-        List<AvailableInterval> intervals = availableIntervalRepo.findAll(inDay(date).and(durationGreaterOrEquals(duration)));
-        if (intervals.isEmpty()) {
-            if (!entryRepo.exists(entryInDay(date))) {
-                initNewDay(date);
-                intervals = availableIntervalRepo.findAll(inDay(date).and(durationGreaterOrEquals(duration)));
-            }
-        }
-        return intervals;
+    public List<AvailableInterval> getAvailableIntervalsForDay(Duration baseDuration, Date date) {
+        initNewDay(date);
+        return availableIntervalRepo.findAll(inDay(date).and(intervalFitsBaseDuration(baseDuration)));
     }
 
     private void initNewDay(Date date) {
-        List<CarBox> carBoxes = carBoxRepo.findAll();
-        Calendar requestCalendar = Calendar.getInstance();
-        requestCalendar.setTime(date);
-        for (CarBox carBox: carBoxes) {
-            Calendar opening = Calendar.getInstance();
-            opening.setTime(carBox.getOpeningTime());
-            opening.set(Calendar.YEAR, requestCalendar.get(Calendar.YEAR));
-            opening.set(Calendar.MONTH, requestCalendar.get(Calendar.MONTH));
-            opening.set(Calendar.DAY_OF_MONTH, requestCalendar.get(Calendar.DAY_OF_MONTH));
+        List<CarBox> carBoxes = carBoxRepo.findAll(notInitialized(date));
+        if (!carBoxes.isEmpty()) {
+            Calendar requestCalendar = Calendar.getInstance();
+            requestCalendar.setTime(date);
+            for (CarBox carBox : carBoxes) {
+                Calendar opening = Calendar.getInstance();
+                opening.setTime(carBox.getOpeningTime());
+                opening.set(Calendar.YEAR, requestCalendar.get(Calendar.YEAR));
+                opening.set(Calendar.MONTH, requestCalendar.get(Calendar.MONTH));
+                opening.set(Calendar.DAY_OF_MONTH, requestCalendar.get(Calendar.DAY_OF_MONTH));
 
-            Calendar closing = Calendar.getInstance();
-            closing.setTime(carBox.getClosingTime());
-            closing.set(Calendar.YEAR, requestCalendar.get(Calendar.YEAR));
-            closing.set(Calendar.MONTH, requestCalendar.get(Calendar.MONTH));
-            closing.set(Calendar.DAY_OF_MONTH, requestCalendar.get(Calendar.DAY_OF_MONTH));
+                Calendar closing = Calendar.getInstance();
+                closing.setTime(carBox.getClosingTime());
+                closing.set(Calendar.YEAR, requestCalendar.get(Calendar.YEAR));
+                closing.set(Calendar.MONTH, requestCalendar.get(Calendar.MONTH));
+                closing.set(Calendar.DAY_OF_MONTH, requestCalendar.get(Calendar.DAY_OF_MONTH));
 
-            freeInterval(opening.getTime(), closing.getTime(), carBox.getId());
+                freeInterval(opening.getTime(), closing.getTime(), carBox.getId());
+            }
         }
+    }
+
+    private Specification<CarBox> notInitialized(Date date) {
+        return (root, query, criteriaBuilder) -> {
+            Subquery<Long> intervalCheckSubquery = query.subquery(Long.class);
+            Subquery<Long> entryCheckSubquery = query.subquery(Long.class);
+            Root<Entry> entryRoot = entryCheckSubquery.from(Entry.class);
+            Join<Entry, CarBox> entryCarBoxJoin = entryRoot.join(Entry_.carBox);
+            Root<AvailableInterval> intervalRoot = intervalCheckSubquery.from(AvailableInterval.class);
+            Join<AvailableInterval, CarBox> intervalCarBoxJoin = intervalRoot.join(AvailableInterval_.carBox);
+
+            Date until = getEndOfDay(date);
+            Date from = getBeginningOfDay(date);
+            intervalCheckSubquery.select(intervalCarBoxJoin.get(CarBox_.id))
+                    .where(criteriaBuilder.between(
+                            intervalRoot.get(AvailableInterval_.from),
+                            from.getTime(),
+                            until.getTime()
+                    ));
+            entryCheckSubquery.select(entryCarBoxJoin.get(CarBox_.id))
+                    .where(criteriaBuilder.between(
+                            entryRoot.get(Entry_.date),
+                            from,
+                            until
+                    ));
+            return criteriaBuilder.and(
+                    criteriaBuilder.in(root.get(CarBox_.id)).value(intervalCheckSubquery).not(),
+                    criteriaBuilder.in(root.get(CarBox_.id)).value(entryCheckSubquery).not()
+            );
+        };
+    }
+
+    @Override
+    public List<AvailableInterval> getIntervalsForConcreteTime(Duration baseDuration, Date date) {
+        List<AvailableInterval> intervals = availableIntervalRepo.findAll(fitsFromTime(baseDuration, date));
+        if (intervals.isEmpty()) {
+            if (!entryRepo.exists(entryInDay(date))) {
+                initNewDay(date);
+                intervals = availableIntervalRepo.findAll(inDay(date).and(intervalFitsBaseDuration(baseDuration)));
+            }
+        }
+        return intervals;
     }
 
     @Override
@@ -104,18 +145,18 @@ public class AvailableIntervalsServiceImpl implements AvailableIntervalsService 
             throw new NoSuchIdException("no such carBoxId");
         }
         if (availableIntervalRepo.exists(intersectAnotherInterval(from, until)
-                        .and(inCarBox(carBoxId)))
+                .and(inCarBox(carBoxId)))
                 || availableIntervalRepo.exists(includeAnotherInterval(from, until)
-                        .and(inCarBox(carBoxId)))) {
+                .and(inCarBox(carBoxId)))) {
             throw new IllegalArgumentException("interval can't intersect or include other intervals");
         }
         if (availableIntervalRepo.exists(
                 isAdjacentInterval(from, until)
-                .and( inCarBox(carBoxId) )
+                        .and(inCarBox(carBoxId))
         )) {
             List<AvailableInterval> adjacentIntervals = availableIntervalRepo.findAll(
                     isAdjacentInterval(from, until)
-                    .and( inCarBox(carBoxId) )
+                            .and(inCarBox(carBoxId))
             );
             CarBox carBox = carBoxRepo.findById(carBoxId).orElseThrow(() -> new NoSuchIdException("no such carBoxId"));
             if (adjacentIntervals.isEmpty()) {
@@ -131,6 +172,8 @@ public class AvailableIntervalsServiceImpl implements AvailableIntervalsService 
                 availableIntervalRepo.save(bigInterval);
             }
         }
+        CarBox carBox = carBoxRepo.findById(carBoxId).orElseThrow(() -> new NoSuchIdException("no such carBoxId"));
+        availableIntervalRepo.save(new AvailableInterval(0, carBox, from.getTime(), until.getTime()));
     }
 
     private Specification<AvailableInterval> inDay(Date date) {
@@ -154,6 +197,23 @@ public class AvailableIntervalsServiceImpl implements AvailableIntervalsService 
     private Specification<AvailableInterval> durationGreaterOrEquals(Duration duration) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.greaterThanOrEqualTo(
                 criteriaBuilder.diff(root.get(AvailableInterval_.until), root.get(AvailableInterval_.from)), duration.toMillis());
+    }
+
+    private Specification<AvailableInterval> fitsFromTime(Duration baseDuration, Date date) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.and(
+                criteriaBuilder.greaterThanOrEqualTo(
+                    criteriaBuilder.diff(root.get(AvailableInterval_.until), date.getTime()),
+                    criteriaBuilder.prod((double) baseDuration.toMillis(), root.get(AvailableInterval_.carBox).get(CarBox_.timeCoefficient)).as(Long.class)
+                ),
+                criteriaBuilder.lessThanOrEqualTo(root.get(AvailableInterval_.from), date.getTime())
+        );
+    }
+
+    private Specification<AvailableInterval> intervalFitsBaseDuration(Duration baseDuration) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.greaterThanOrEqualTo(
+                criteriaBuilder.diff(root.get(AvailableInterval_.until), root.get(AvailableInterval_.from)),
+                criteriaBuilder.prod((double) baseDuration.toMillis(), root.get(AvailableInterval_.carBox).get(CarBox_.timeCoefficient)).as(Long.class)
+        );
     }
 
     private Specification<AvailableInterval> intersectAnotherInterval(Date from, Date until) {

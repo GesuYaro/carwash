@@ -7,11 +7,9 @@ import java.util.Date;
 
 @Data
 @AllArgsConstructor
-public class EntryRequestDto {
+public class EntryUserRequestDto {
 
     private long serviceId;
     private Date date;
-    private long carboxId;
-    private long price;
 
 }

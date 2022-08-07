@@ -8,6 +8,6 @@ import shagiev.carwash.model.carbox.CarBox;
 @Mapper(componentModel = "spring")
 public interface CarBoxInfoDtoMapper extends Converter<CarBox, CarBoxInfoDto> {
 
-    CarBoxInfoDto convertToDto(CarBox carBox);
+    CarBoxInfoDto convert(CarBox carBox);
 
 }

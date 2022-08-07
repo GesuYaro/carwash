@@ -10,6 +10,6 @@ import shagiev.carwash.model.carbox.CarBox;
 public interface CarBoxMapper extends Converter<CarBoxRequestDto, CarBox> {
 
     @Mapping(target = "id", constant = "0L")
-    CarBox convertToEntity(CarBoxRequestDto carBoxDto);
+    CarBox convert(CarBoxRequestDto carBoxDto);
 
 }
