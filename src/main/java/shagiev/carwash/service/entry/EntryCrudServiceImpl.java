@@ -39,7 +39,7 @@ public class EntryCrudServiceImpl implements EntryCrudService {
     public EntryInfoDto getConcrete(long id) {
         var entry = entryRepo.findById(id);
         if (entry.isPresent()) {
-            return conversionService.convert(entry, EntryInfoDto.class);
+            return conversionService.convert(entry.get(), EntryInfoDto.class);
         } else {
             return null;
         }

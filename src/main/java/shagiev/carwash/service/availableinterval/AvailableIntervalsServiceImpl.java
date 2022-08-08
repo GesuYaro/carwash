@@ -92,14 +92,8 @@ public class AvailableIntervalsServiceImpl implements AvailableIntervalsService 
 
     @Override
     public List<AvailableInterval> getIntervalsForConcreteTime(Duration baseDuration, Date date) {
-        List<AvailableInterval> intervals = availableIntervalRepo.findAll(fitsFromTime(baseDuration, date));
-        if (intervals.isEmpty()) {
-            if (!entryRepo.exists(entryInDay(date))) {
-                initNewDay(date);
-                intervals = availableIntervalRepo.findAll(inDay(date).and(intervalFitsBaseDuration(baseDuration)));
-            }
-        }
-        return intervals;
+        initNewDay(date);
+        return availableIntervalRepo.findAll(fitsFromTime(baseDuration, date));
     }
 
     @Override
@@ -170,10 +164,12 @@ public class AvailableIntervalsServiceImpl implements AvailableIntervalsService 
                         .max().getAsLong();
                 AvailableInterval bigInterval = new AvailableInterval(0, carBox, minFrom, maxUntil);
                 availableIntervalRepo.save(bigInterval);
+                availableIntervalRepo.deleteAll(adjacentIntervals);
             }
+        } else {
+            CarBox carBox = carBoxRepo.findById(carBoxId).orElseThrow(() -> new NoSuchIdException("no such carBoxId"));
+            availableIntervalRepo.save(new AvailableInterval(0, carBox, from.getTime(), until.getTime()));
         }
-        CarBox carBox = carBoxRepo.findById(carBoxId).orElseThrow(() -> new NoSuchIdException("no such carBoxId"));
-        availableIntervalRepo.save(new AvailableInterval(0, carBox, from.getTime(), until.getTime()));
     }
 
     private Specification<AvailableInterval> inDay(Date date) {

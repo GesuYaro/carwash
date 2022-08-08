@@ -25,7 +25,7 @@ public class AvailableInterval {
 
     @ManyToOne
     @JoinColumn(name = "carbox_id", referencedColumnName = "id")
-    @Fetch(FetchMode.JOIN)
+    @Fetch(FetchMode.SELECT)
     private CarBox carBox;
 
     @Column(name = "from_time")

@@ -3,9 +3,7 @@ package shagiev.carwash.repo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import shagiev.carwash.model.availableinterval.AvailableInterval;
@@ -41,13 +39,8 @@ public interface AvailableIntervalRepo extends JpaRepository<AvailableInterval, 
     @EntityGraph(attributePaths = "carBox")
     Optional<AvailableInterval> findById(Long aLong);
 
-    @Override
-    @Transactional(readOnly = true)
-    @EntityGraph(attributePaths = "carBox")
-    boolean existsById(Long aLong);
-
-    @Override
-    @Transactional(readOnly = true)
-    @EntityGraph(attributePaths = "carBox")
-    boolean exists(Specification<AvailableInterval> spec);
+    @Transactional
+    @Modifying
+    @Query("delete from AvailableInterval a where a.from < ?1")
+    void deleteAllByFromLessThan(long from);
 }

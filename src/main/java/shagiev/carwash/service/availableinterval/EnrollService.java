@@ -12,5 +12,6 @@ public interface EnrollService {
     List<AvailableIntervalDto> getAvailableIntervals(Date date, long serviceId);
     EntryInfoDto makeEntry(Date date, long serviceId);
     EntryInfoDto freeEntry(long entryId, EntryStatus status);
+    EntryInfoDto confirm(long entryId);
 
 }

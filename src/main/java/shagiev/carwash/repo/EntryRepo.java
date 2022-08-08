@@ -34,11 +34,6 @@ public interface EntryRepo extends JpaRepository<Entry, Long>, JpaSpecificationE
     @Override
     @Transactional(readOnly = true)
     @EntityGraph(attributePaths = {"carBox", "carwashService"})
-    boolean exists(Specification<Entry> spec);
-
-    @Override
-    @Transactional(readOnly = true)
-    @EntityGraph(attributePaths = {"carBox", "carwashService"})
     Page<Entry> findAll(Pageable pageable);
 
     @Override
@@ -46,8 +41,4 @@ public interface EntryRepo extends JpaRepository<Entry, Long>, JpaSpecificationE
     @EntityGraph(attributePaths = {"carBox", "carwashService"})
     Optional<Entry> findById(Long aLong);
 
-    @Override
-    @Transactional(readOnly = true)
-    @EntityGraph(attributePaths = {"carBox", "carwashService"})
-    boolean existsById(Long aLong);
 }
