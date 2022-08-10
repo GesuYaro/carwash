@@ -13,14 +13,14 @@ import shagiev.carwash.dto.user.AppUserRequestDto;
 import shagiev.carwash.service.user.UserService;
 
 @RestController
-@RequestMapping("/register")
+@RequestMapping("/auth")
 @PreAuthorize("isAnonymous()")
 @RequiredArgsConstructor
-public class RegisterController {
+public class AuthController {
 
     private final UserService userService;
 
-    @PostMapping
+    @PostMapping("/register")
     public AppUserDto register(@RequestBody AppUserRequestDto requestDto) {
         try {
             return userService.register(requestDto);
@@ -29,6 +29,8 @@ public class RegisterController {
         }
     }
 
-
+    @PostMapping("/login")
+    public void login(@RequestBody AppUserRequestDto requestDto) {
+    }
 
 }

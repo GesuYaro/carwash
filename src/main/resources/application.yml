@@ -20,5 +20,17 @@ carwash:
   confirmation:
     confirm-timer: 900000 # 15 min == 900000 ms
     confirm-address: "http://localhost:8080/enroll/confirm"
+  security:
+    bearer: "Bearer "
+    auth-header-name: "X-Auth-Token"
+    secure-key: "The specified key byte array is 208 bits which is not secure enough for any JWT HMAC-SHA algorithm."
+    auth-claim: "auth"
+    access-token:
+      days: 1
+      name: "access_token"
+    refresh-token:
+      days: 7
+      name: "refresh_token"
+    login-url: "/auth/login"
 
 
