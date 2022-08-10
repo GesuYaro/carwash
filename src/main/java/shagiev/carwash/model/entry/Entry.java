@@ -6,6 +6,7 @@ import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import shagiev.carwash.model.carbox.CarBox;
 import shagiev.carwash.model.service.CarwashService;
+import shagiev.carwash.model.user.AppUser;
 
 import javax.persistence.*;
 import java.util.Date;
@@ -44,6 +45,11 @@ public class Entry {
 
     @Column(name = "price")
     private long price;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @Fetch(FetchMode.JOIN)
+    private AppUser user;
 
     @Override
     public boolean equals(Object o) {

@@ -11,6 +11,7 @@ public interface EntryInfoDtoMapper extends Converter<Entry, EntryInfoDto> {
 
     @Mapping(source = "entry.carBox.id", target = "carboxId")
     @Mapping(source = "entry.carwashService.id", target = "serviceId")
+    @Mapping(source = "entry.user.id", target = "userId")
     EntryInfoDto convert(Entry entry);
 
 }

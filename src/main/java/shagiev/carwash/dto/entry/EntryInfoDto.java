@@ -13,6 +13,7 @@ public class EntryInfoDto {
     private long id;
     private long carboxId;
     private long serviceId;
+    private long userId;
     private Date date;
     private EntryStatus status;
     private long price;

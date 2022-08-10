@@ -10,6 +10,7 @@ import java.util.Date;
 public class EntryRequestDto {
 
     private long serviceId;
+    private long userId;
     private Date date;
     private long carboxId;
     private long price;

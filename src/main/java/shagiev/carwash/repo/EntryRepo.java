@@ -18,27 +18,31 @@ public interface EntryRepo extends JpaRepository<Entry, Long>, JpaSpecificationE
 
     @Override
     @Transactional(readOnly = true)
-    @EntityGraph(attributePaths = {"carBox", "carwashService"})
+    @EntityGraph(attributePaths = {"carBox", "carwashService", "user"})
     List<Entry> findAll();
 
     @Override
     @Transactional(readOnly = true)
-    @EntityGraph(attributePaths = {"carBox", "carwashService"})
+    @EntityGraph(attributePaths = {"carBox", "carwashService", "user"})
     List<Entry> findAll(Specification<Entry> spec);
 
     @Override
     @Transactional(readOnly = true)
-    @EntityGraph(attributePaths = {"carBox", "carwashService"})
+    @EntityGraph(attributePaths = {"carBox", "carwashService", "user"})
     Page<Entry> findAll(Specification<Entry> spec, Pageable pageable);
 
     @Override
     @Transactional(readOnly = true)
-    @EntityGraph(attributePaths = {"carBox", "carwashService"})
+    @EntityGraph(attributePaths = {"carBox", "carwashService", "user"})
     Page<Entry> findAll(Pageable pageable);
 
     @Override
     @Transactional(readOnly = true)
-    @EntityGraph(attributePaths = {"carBox", "carwashService"})
+    @EntityGraph(attributePaths = {"carBox", "carwashService", "user"})
     Optional<Entry> findById(Long aLong);
+
+    @Transactional(readOnly = true)
+    @EntityGraph(attributePaths = {"carBox", "carwashService", "user"})
+    List<Entry> findAllByCarBox_Id(Long carBoxId);
 
 }

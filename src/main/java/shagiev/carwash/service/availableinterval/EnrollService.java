@@ -10,8 +10,8 @@ import java.util.List;
 public interface EnrollService {
 
     List<AvailableIntervalDto> getAvailableIntervals(Date date, long serviceId);
-    EntryInfoDto makeEntry(Date date, long serviceId);
-    EntryInfoDto freeEntry(long entryId, EntryStatus status);
-    EntryInfoDto confirm(long entryId);
+    EntryInfoDto makeEntry(Date date, long serviceId, long userId);
+    EntryInfoDto freeEntry(long entryId, EntryStatus status, long userId);
+    EntryInfoDto confirm(long entryId, long userId);
 
 }

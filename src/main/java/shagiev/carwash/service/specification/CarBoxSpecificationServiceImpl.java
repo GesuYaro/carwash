@@ -1,6 +1,7 @@
 package shagiev.carwash.service.specification;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 import shagiev.carwash.model.availableinterval.AvailableInterval;
 import shagiev.carwash.model.availableinterval.AvailableInterval_;
 import shagiev.carwash.model.carbox.CarBox;
@@ -14,6 +15,7 @@ import javax.persistence.criteria.Subquery;
 import java.util.Calendar;
 import java.util.Date;
 
+@Service
 public class CarBoxSpecificationServiceImpl implements CarBoxSpecificationService {
 
     @Override

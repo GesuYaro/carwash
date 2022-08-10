@@ -15,4 +15,6 @@ public interface EntryCrudService {
     EntryInfoDto updateStatus(long id, EntryStatus status);
     void delete(long id);
 
+    List<EntryInfoDto> getAllByCarBox(long carBoxId);
+
 }

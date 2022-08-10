@@ -41,7 +41,10 @@ public class EnrollServiceImpl implements EnrollService {
     }
 
     @Override
-    public EntryInfoDto makeEntry(Date date, long serviceId) {
+    public EntryInfoDto makeEntry(Date date, long serviceId, long userId) {
+        if (!carwashServiceRepo.existsById(serviceId)) {
+            throw new NoSuchIdException("no such service");
+        }
         Duration baseDuration = carwashServiceCrudService.getConcrete(serviceId).getDuration();
         List<AvailableInterval> intervals = intervalsService.getIntervalsForConcreteTime(baseDuration, date);
         if (intervals.isEmpty()) {
@@ -54,7 +57,8 @@ public class EnrollServiceImpl implements EnrollService {
                 + (long) (baseDuration.toMillis() * biggestInterval.getCarBox().getTimeCoefficient()));
         intervalsService.busyInterval(biggestInterval.getId(), date, until);
         CarwashService service = carwashServiceRepo.getReferenceById(serviceId);
-        EntryRequestDto entryRequestDto = new EntryRequestDto(serviceId, date,
+
+        EntryRequestDto entryRequestDto = new EntryRequestDto(serviceId, userId, date,
                 biggestInterval.getCarBox().getId(), service.getPrice());
         EntryInfoDto savedEntry = entryCrudService.save(entryRequestDto);
         entryConfirmationService.startConfirmation(savedEntry);
@@ -62,12 +66,12 @@ public class EnrollServiceImpl implements EnrollService {
     }
 
     @Override
-    public EntryInfoDto freeEntry(long entryId, EntryStatus status) {
+    public EntryInfoDto freeEntry(long entryId, EntryStatus status, long userId) {
         return cancelEnrollService.freeEntry(entryId, status);
     }
 
     @Override
-    public EntryInfoDto confirm(long entryId) {
+    public EntryInfoDto confirm(long entryId, long userId) {
         Entry entry = entryRepo.findById(entryId)
                 .orElseThrow(() -> new NoSuchIdException("no such entry id: " + entryId));
         if (entry.getStatus() == EntryStatus.UNCONFIRMED) {

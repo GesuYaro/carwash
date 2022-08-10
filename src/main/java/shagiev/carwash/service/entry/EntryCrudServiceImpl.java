@@ -9,6 +9,8 @@ import shagiev.carwash.model.carbox.CarBox;
 import shagiev.carwash.model.entry.Entry;
 import shagiev.carwash.model.entry.EntryStatus;
 import shagiev.carwash.model.service.CarwashService;
+import shagiev.carwash.model.user.AppUser;
+import shagiev.carwash.repo.AppUserRepo;
 import shagiev.carwash.repo.CarBoxRepo;
 import shagiev.carwash.repo.CarwashServiceRepo;
 import shagiev.carwash.repo.EntryRepo;
@@ -23,6 +25,7 @@ public class EntryCrudServiceImpl implements EntryCrudService {
 
     private final EntryRepo entryRepo;
     private final CarBoxRepo carBoxRepo;
+    private final AppUserRepo appUserRepo;
     private final CarwashServiceRepo carwashServiceRepo;
     private final ConversionService conversionService;
 
@@ -41,7 +44,7 @@ public class EntryCrudServiceImpl implements EntryCrudService {
         if (entry.isPresent()) {
             return conversionService.convert(entry.get(), EntryInfoDto.class);
         } else {
-            return null;
+            throw new NoSuchIdException("no such entry");
         }
     }
 
@@ -51,13 +54,16 @@ public class EntryCrudServiceImpl implements EntryCrudService {
                 .orElseThrow(() -> new NoSuchIdException("no such carbox (id = " + entryDto.getCarboxId() + ")"));
         CarwashService service = carwashServiceRepo.findById(entryDto.getServiceId())
                 .orElseThrow(() -> new NoSuchIdException("no such service (id = " + entryDto.getServiceId() + ")"));
+        AppUser appUser = appUserRepo.findById(entryDto.getUserId())
+                .orElseThrow(() -> new NoSuchIdException("no such user (id = " + entryDto.getUserId() + ")"));
         Entry entry = new Entry(
                 0,
                 carBox,
                 service,
                 entryDto.getDate(),
                 EntryStatus.UNCONFIRMED,
-                entryDto.getPrice()
+                entryDto.getPrice(),
+                appUser
         );
         Entry savedEntry = entryRepo.save(entry);
         return conversionService.convert(savedEntry, EntryInfoDto.class);
@@ -65,23 +71,27 @@ public class EntryCrudServiceImpl implements EntryCrudService {
 
     @Override
     public EntryInfoDto update(long id, EntryRequestDto entryDto) {
-        CarBox carBox = carBoxRepo.findById(entryDto.getCarboxId())
-                .orElseThrow(() -> new NoSuchIdException("no such carbox (id = " + entryDto.getCarboxId() + ")"));
-        CarwashService service = carwashServiceRepo.findById(entryDto.getServiceId())
-                .orElseThrow(() -> new NoSuchIdException("no such service (id = " + entryDto.getServiceId() + ")"));
-        Entry entry = new Entry(
-                id,
-                carBox,
-                service,
-                entryDto.getDate(),
-                EntryStatus.UNCONFIRMED,
-                entryDto.getPrice()
-        );
         if (entryRepo.existsById(id)) {
+            CarBox carBox = carBoxRepo.findById(entryDto.getCarboxId())
+                    .orElseThrow(() -> new NoSuchIdException("no such carbox (id = " + entryDto.getCarboxId() + ")"));
+            CarwashService service = carwashServiceRepo.findById(entryDto.getServiceId())
+                    .orElseThrow(() -> new NoSuchIdException("no such service (id = " + entryDto.getServiceId() + ")"));
+            AppUser appUser = appUserRepo.findById(entryDto.getUserId())
+                    .orElseThrow(() -> new NoSuchIdException("no such user (id = " + entryDto.getUserId() + ")"));
+            Entry entry = new Entry(
+                    id,
+                    carBox,
+                    service,
+                    entryDto.getDate(),
+                    EntryStatus.UNCONFIRMED,
+                    entryDto.getPrice(),
+                    appUser
+            );
             Entry savedEntry = entryRepo.save(entry);
             return conversionService.convert(savedEntry, EntryInfoDto.class);
+        } else {
+            throw new NoSuchIdException("no such entry (id = " + entryDto.getUserId() + ")");
         }
-        return null;
     }
 
     @Override
@@ -99,7 +109,8 @@ public class EntryCrudServiceImpl implements EntryCrudService {
                 oldEntry.getCarwashService(),
                 oldEntry.getDate(),
                 status,
-                oldEntry.getPrice()
+                oldEntry.getPrice(),
+                oldEntry.getUser()
         );
         if (entryRepo.existsById(id)) {
             Entry savedEntry = entryRepo.save(entry);
@@ -107,4 +118,17 @@ public class EntryCrudServiceImpl implements EntryCrudService {
         }
         return null;
     }
+
+    @Override
+    public List<EntryInfoDto> getAllByCarBox(long carBoxId) {
+        if (!carBoxRepo.existsById(carBoxId)) {
+            throw new NoSuchIdException("no such carBox");
+        }
+        List<EntryInfoDto> dtos = new ArrayList<>();
+        entryRepo.findAllByCarBox_Id(carBoxId).forEach(entry ->
+                dtos.add(conversionService.convert(entry, EntryInfoDto.class))
+        );
+        return dtos;
+    }
+
 }
