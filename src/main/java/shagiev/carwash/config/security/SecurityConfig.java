@@ -23,23 +23,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${carwash.security.auth-header-name}")
     private String headerName;
 
-    @Value("${carwash.security.secure-key}")
-    private String secureKey;
-
-    @Value("${carwash.security.auth-claim}")
-    private String authClaimName;
-
     @Value("${carwash.security.access-token.name}")
     private String accessTokenName;
 
     @Value("${carwash.security.refresh-token.name}")
     private String refreshTokenName;
-
-    @Value("${carwash.security.access-token.days}")
-    private long accessTokenDays;
-
-    @Value("${carwash.security.refresh-token.days}")
-    private long refreshTokenDays;
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {
@@ -49,7 +37,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         JwtAuthFilter jwtAuthFilter = new JwtAuthFilter("/auth/login", this.authenticationManager());
-        JwtValidator jwtValidator = new JwtValidator("/auth/register");
+        JwtValidator jwtValidator = new JwtValidator(new String[]{"/auth/register", "/refresh-token"});
         init(jwtAuthFilter, jwtValidator);
 
         http
@@ -71,16 +59,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     private void init(JwtAuthFilter jwtAuthFilter, JwtValidator jwtValidator) {
-        jwtAuthFilter.setSecureKey(secureKey);
         jwtAuthFilter.setAccessTokenName(accessTokenName);
         jwtAuthFilter.setRefreshTokenName(refreshTokenName);
-        jwtAuthFilter.setAuthClaimName(authClaimName);
-        jwtAuthFilter.setAccessTokenDays(accessTokenDays);
-        jwtAuthFilter.setRefreshTokenDays(refreshTokenDays);
 
         jwtValidator.setBearer(bearer);
         jwtValidator.setHeaderName(headerName);
-        jwtValidator.setSecureKey(secureKey);
-        jwtValidator.setAuthClaimName(authClaimName);
     }
 }

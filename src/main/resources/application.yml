@@ -23,6 +23,7 @@ carwash:
   security:
     bearer: "Bearer "
     auth-header-name: "X-Auth-Token"
+    refresh-header-name: "X-Refresh-Token"
     secure-key: "The specified key byte array is 208 bits which is not secure enough for any JWT HMAC-SHA algorithm."
     auth-claim: "auth"
     access-token:

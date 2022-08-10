@@ -12,15 +12,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import shagiev.carwash.dto.user.AppUserRequestDto;
+import shagiev.carwash.service.security.JwtTokenService;
+import shagiev.carwash.service.security.JwtTokenServiceImpl;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.sql.Date;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,29 +27,18 @@ import java.util.Map;
 public class JwtAuthFilter extends AbstractAuthenticationProcessingFilter {
 
     private final AuthenticationManager authenticationManager;
+    private final JwtTokenService jwtTokenService = new JwtTokenServiceImpl();
 
     public JwtAuthFilter(String defaultFilterProcessesUrl, AuthenticationManager authenticationManager) {
         super(defaultFilterProcessesUrl);
         this.authenticationManager = authenticationManager;
     }
 
-    @Value("${carwash.security.secure-key}")
-    private String secureKey;
-
     @Value("${carwash.security.access-token.name}")
     private String accessTokenName;
 
     @Value("${carwash.security.refresh-token.name}")
     private String refreshTokenName;
-
-    @Value("${carwash.security.auth-claim}")
-    private String authClaimName;
-
-    @Value("${carwash.security.access-token.days}")
-    private long accessTokenDays;
-
-    @Value("${carwash.security.refresh-token.days}")
-    private long refreshTokenDays;
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
@@ -85,25 +73,11 @@ public class JwtAuthFilter extends AbstractAuthenticationProcessingFilter {
     }
 
     private String generateAccessToken(Authentication authResult) {
-        Instant issuedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
-        Instant expiration = issuedAt.plus(accessTokenDays, ChronoUnit.DAYS);
-        return Jwts.builder()
-                .setSubject(authResult.getName())
-                .claim(authClaimName, authResult.getAuthorities())
-                .setExpiration(Date.from(expiration))
-                .signWith(Keys.hmacShaKeyFor(secureKey.getBytes()))
-                .compact();
+        return jwtTokenService.generateAccessToken(authResult);
     }
 
     private String generateRefreshToken(Authentication authResult) {
-        Instant issuedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
-        Instant expiration = issuedAt.plus(refreshTokenDays, ChronoUnit.DAYS);
-        return Jwts.builder()
-                .setSubject(authResult.getName())
-                .claim(authClaimName, authResult.getAuthorities())
-                .setExpiration(Date.from(expiration))
-                .signWith(Keys.hmacShaKeyFor(secureKey.getBytes()))
-                .compact();
+        return jwtTokenService.generateRefreshToken(authResult);
     }
 
 }

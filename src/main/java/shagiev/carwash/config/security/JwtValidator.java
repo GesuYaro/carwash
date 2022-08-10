@@ -11,6 +11,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import shagiev.carwash.service.security.JwtTokenService;
+import shagiev.carwash.service.security.JwtTokenServiceImpl;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -34,16 +36,12 @@ public class JwtValidator extends OncePerRequestFilter {
     @Value("${carwash.security.auth-header-name}")
     private String headerName;
 
-    @Value("${carwash.security.secure-key}")
-    private String secureKey;
+    private final String[] shouldNotFilterUrls;
 
-    @Value("${carwash.security.auth-claim}")
-    private String authClaimName;
+    private final JwtTokenService jwtTokenService = new JwtTokenServiceImpl();
 
-    private final String shouldNotFilterUrl;
-
-    public JwtValidator(String shouldNotFilterUrl) {
-        this.shouldNotFilterUrl = shouldNotFilterUrl;
+    public JwtValidator(String[] shouldNotFilterUrls) {
+        this.shouldNotFilterUrls = shouldNotFilterUrls;
     }
 
     @Override
@@ -63,7 +61,12 @@ public class JwtValidator extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        return request.getRequestURI().equals(shouldNotFilterUrl);
+        for (String url: shouldNotFilterUrls) {
+            if (request.getRequestURI().equals(url)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void doAuthenticate(HttpServletRequest request) {
@@ -84,30 +87,11 @@ public class JwtValidator extends OncePerRequestFilter {
     }
 
     private Set<SimpleGrantedAuthority> getAuthorities(Claims claims) {
-        var auth = (List<Map<String, String>>) claims.get(authClaimName);
-        return auth.stream()
-                .map(map -> new SimpleGrantedAuthority(map.get("authority")))
-                .collect(Collectors.toSet());
+        return jwtTokenService.getAuthorities(claims);
     }
 
     private Claims extractClaims(String authorizationHeader) {
-        String token = extractToken(authorizationHeader);
-        JwtParserBuilder jwtParserBuilder = Jwts.parserBuilder();
-        jwtParserBuilder.setSigningKey(Keys.hmacShaKeyFor(secureKey.getBytes()));
-        Jws<Claims> jws = jwtParserBuilder.build().parseClaimsJws(token);
-        Claims claims = jws.getBody();
-        if (claims
-                .getExpiration()
-                .before(
-                        Date.from(LocalDateTime.now().toInstant(ZoneOffset.UTC))
-                )
-        ) {
-            throw new ExpiredJwtException(jws.getHeader(), jws.getBody(), "JWT token is expired");
-        }
-        return claims;
+        return jwtTokenService.extractClaims(authorizationHeader);
     }
 
-    private String extractToken(String authorizationHeader) {
-        return authorizationHeader.replace(bearer, "");
-    }
 }
