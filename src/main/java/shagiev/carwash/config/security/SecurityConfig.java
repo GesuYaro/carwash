@@ -1,5 +1,6 @@
 package shagiev.carwash.config.security;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,10 +12,12 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import shagiev.carwash.service.security.JwtTokenService;
 
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true)
+@RequiredArgsConstructor
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Value("${carwash.security.bearer}")
@@ -29,6 +32,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Value("${carwash.security.refresh-token.name}")
     private String refreshTokenName;
 
+    private final JwtTokenService jwtTokenService;
+
     @Bean
     public PasswordEncoder getPasswordEncoder() {
         return new BCryptPasswordEncoder(6);
@@ -36,8 +41,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        JwtAuthFilter jwtAuthFilter = new JwtAuthFilter("/auth/login", this.authenticationManager());
-        JwtValidator jwtValidator = new JwtValidator(new String[]{"/auth/register", "/refresh-token"});
+        JwtAuthFilter jwtAuthFilter = new JwtAuthFilter("/auth/login", this.authenticationManager(), jwtTokenService);
+        JwtValidator jwtValidator = new JwtValidator(new String[]{"/auth/register", "/refresh-token"}, jwtTokenService);
         init(jwtAuthFilter, jwtValidator);
 
         http
@@ -49,7 +54,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/auth/*")
+                .antMatchers("/auth/*", "/refresh-token")
                 .anonymous()
                 .anyRequest()
                 .authenticated()

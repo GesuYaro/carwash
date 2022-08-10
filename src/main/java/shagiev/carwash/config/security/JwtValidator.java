@@ -38,10 +38,11 @@ public class JwtValidator extends OncePerRequestFilter {
 
     private final String[] shouldNotFilterUrls;
 
-    private final JwtTokenService jwtTokenService = new JwtTokenServiceImpl();
+    private final JwtTokenService jwtTokenService;
 
-    public JwtValidator(String[] shouldNotFilterUrls) {
+    public JwtValidator(String[] shouldNotFilterUrls, JwtTokenService jwtTokenService) {
         this.shouldNotFilterUrls = shouldNotFilterUrls;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @Override

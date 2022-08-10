@@ -1,8 +1,6 @@
 package shagiev.carwash.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -27,11 +25,12 @@ import java.util.Map;
 public class JwtAuthFilter extends AbstractAuthenticationProcessingFilter {
 
     private final AuthenticationManager authenticationManager;
-    private final JwtTokenService jwtTokenService = new JwtTokenServiceImpl();
+    private final JwtTokenService jwtTokenService;
 
-    public JwtAuthFilter(String defaultFilterProcessesUrl, AuthenticationManager authenticationManager) {
+    public JwtAuthFilter(String defaultFilterProcessesUrl, AuthenticationManager authenticationManager, JwtTokenService jwtTokenService) {
         super(defaultFilterProcessesUrl);
         this.authenticationManager = authenticationManager;
+        this.jwtTokenService = jwtTokenService;
     }
 
     @Value("${carwash.security.access-token.name}")
