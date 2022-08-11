@@ -17,6 +17,7 @@ import shagiev.carwash.service.util.DateParserService;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -29,8 +30,8 @@ public class EntryController {
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')" +
-            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isCarBoxBelongsToOperator(#carboxId, #appUserSecurityDto.id))")
-    public List<EntryInfoDto> getAll(@AuthenticationPrincipal AppUserSecurityDto appUserSecurityDto,
+            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isCarBoxBelongsToOperator(#carboxId, #principal))")
+    public List<EntryInfoDto> getAll(Principal principal,
                                      @RequestParam(required = false) @Min(1) Long carboxId,
                                      @RequestParam(required = false) @Pattern(regexp = "\\d{4}-[0,1]\\d-[0-3]\\d") String from,
                                      @RequestParam(required = false) @Pattern(regexp = "\\d{4}-[0,1]\\d-[0-3]\\d") String until,

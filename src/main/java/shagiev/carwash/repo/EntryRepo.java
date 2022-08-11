@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import shagiev.carwash.model.entry.Entry;
+import shagiev.carwash.model.entry.EntryStatus;
 
 import java.util.Date;
 import java.util.List;
@@ -50,5 +51,9 @@ public interface EntryRepo extends JpaRepository<Entry, Long>, JpaSpecificationE
     @Transactional(readOnly = true)
     @Query("select sum(e.price) from Entry e where (e.date between ?1 and ?2) and (e.status = 'FINISHED')")
     Long sumIncome(Date from, Date until);
+
+    @Transactional(readOnly = true)
+    @EntityGraph(attributePaths = {"carBox", "carwashService", "user"})
+    Page<Entry> findAllByUser_IdAndStatus(long userId, EntryStatus status, Pageable pageable);
 
 }

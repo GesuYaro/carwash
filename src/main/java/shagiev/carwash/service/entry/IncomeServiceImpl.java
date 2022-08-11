@@ -5,8 +5,6 @@ import org.springframework.stereotype.Service;
 import shagiev.carwash.repo.EntryRepo;
 import shagiev.carwash.service.util.DateParserService;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Service
@@ -18,9 +16,17 @@ public class IncomeServiceImpl implements IncomeService {
 
     @Override
     public Long countIncome(String from, String until) {
+        Date dateFrom = dateParserService.getDate(from);
+        Date dateUntil = dateParserService.getDate(until);
+        if (dateFrom == null) {
+            dateFrom = new Date(0);
+        }
+        if (dateUntil == null) {
+            dateUntil = new Date(Long.MAX_VALUE / 2048);
+        }
         return entryRepo.sumIncome(
-                dateParserService.getDate(from),
-                dateParserService.getDate(until)
+                dateFrom,
+                dateUntil
         );
     }
 

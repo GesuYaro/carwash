@@ -169,19 +169,37 @@ public class EntryCrudServiceImpl implements EntryCrudService {
         if (carBoxId != null) {
             specification = entrySpecificationService.inCarBox(carBoxId);
             if (from != null) {
-                specification.and(entrySpecificationService.afterDate(from));
+                specification = specification.and(entrySpecificationService.afterDate(from));
             }
             if (until != null) {
-                specification.and(entrySpecificationService.beforeDate(until));
+                specification = specification.and(entrySpecificationService.beforeDate(until));
             }
         } else if (from != null) {
             specification = entrySpecificationService.afterDate(from);
             if (until != null) {
-                specification.and(entrySpecificationService.beforeDate(until));
+                specification = specification.and(entrySpecificationService.beforeDate(until));
             }
         } else if (until != null) {
             specification = entrySpecificationService.beforeDate(until);
         }
         return specification;
     }
+
+    @Override
+    public List<EntryInfoDto> getAllByUser(long userId, EntryStatus entryStatus, Integer page, Integer pageSize) {
+        if (page == null) {
+            page = 0;
+        }
+        if (pageSize == null) {
+            pageSize = 10;
+        }
+        List<EntryInfoDto> dtos = new ArrayList<>();
+        Pageable pageable = PageRequest.of(page, pageSize);
+        Page<Entry> result = entryRepo.findAllByUser_IdAndStatus(userId, entryStatus, pageable);
+        result.forEach(entry ->
+                dtos.add(conversionService.convert(entry, EntryInfoDto.class))
+        );
+        return dtos;
+    }
+
 }

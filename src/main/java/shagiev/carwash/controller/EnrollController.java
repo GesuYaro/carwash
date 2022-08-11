@@ -12,10 +12,13 @@ import shagiev.carwash.dto.entry.EntryInfoDto;
 import shagiev.carwash.dto.entry.EntryUserRequestDto;
 import shagiev.carwash.dto.user.AppUserSecurityDto;
 import shagiev.carwash.model.entry.EntryStatus;
+import shagiev.carwash.model.user.AppUser;
 import shagiev.carwash.service.availableinterval.EnrollService;
 import shagiev.carwash.service.exceptions.NoSuchIdException;
+import shagiev.carwash.service.security.UserFromPrincipalService;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -24,6 +27,7 @@ import java.util.List;
 public class EnrollController {
 
     private final EnrollService enrollService;
+    private final UserFromPrincipalService userFromPrincipalService;
 
     @GetMapping("/available-intervals")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'USER')")
@@ -33,12 +37,12 @@ public class EnrollController {
 
     @GetMapping("/confirm/{id}")
     @PreAuthorize("hasAnyRole('ADMIN') " +
-            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToOperator(#id, #appUserSecurityDto.id))" +
-            "|| (hasAnyRole('USER', 'OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToUser(#id, #appUserSecurityDto.id))")
+            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToOperator(#id, #principal))" +
+            "|| (hasAnyRole('USER', 'OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToUser(#id, #principal))")
     public EntryInfoDto confirmEnroll(@PathVariable long id,
-                                      @AuthenticationPrincipal AppUserSecurityDto appUserSecurityDto) {
+                                      Principal principal) {
         try {
-            return enrollService.confirm(id, appUserSecurityDto.getId());
+            return enrollService.confirm(id);
         } catch (NoSuchIdException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }
@@ -47,13 +51,28 @@ public class EnrollController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'USER')")
     public EntryInfoDto enroll(@RequestBody @Valid EntryUserRequestDto entryUserRequestDto,
-                               @AuthenticationPrincipal AppUserSecurityDto appUserSecurityDto) {
+                               Principal principal) {
+        AppUser user = userFromPrincipalService.getUser(principal);
         try {
             return enrollService.makeEntry(
                     entryUserRequestDto.getDate(),
                     entryUserRequestDto.getServiceId(),
-                    appUserSecurityDto.getId()
+                    user.getId()
             );
+        } catch (NoSuchIdException | IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        }
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN') " +
+            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToOperator(#id, #principal))" +
+            "|| (hasAnyRole('USER', 'OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToUser(#id, #principal))")
+    public EntryInfoDto update(@PathVariable long id,
+                               @RequestBody @Valid EntryUserRequestDto entryUserRequestDto,
+                               Principal principal) {
+        try {
+            return enrollService.update(id, entryUserRequestDto);
         } catch (NoSuchIdException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }
@@ -61,11 +80,11 @@ public class EnrollController {
 
     @PutMapping("/finish/{id}")
     @PreAuthorize("hasAnyRole('ADMIN') " +
-            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToOperator(#id, #appUserSecurityDto.id))")
+            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToOperator(#id, #principal))")
     public EntryInfoDto finish(@PathVariable long id,
-                               @AuthenticationPrincipal AppUserSecurityDto appUserSecurityDto) {
+                               Principal principal) {
         try {
-            return enrollService.freeEntry(id, EntryStatus.FINISHED, appUserSecurityDto.getId());
+            return enrollService.freeEntry(id, EntryStatus.FINISHED);
         } catch (NoSuchIdException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }
@@ -73,12 +92,12 @@ public class EnrollController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN') " +
-            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToOperator(#id, #appUserSecurityDto.id))" +
-            "|| (hasAnyRole('USER', 'OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToUser(#id, #appUserSecurityDto.id))")
+            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToOperator(#id, #principal))" +
+            "|| (hasAnyRole('USER', 'OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToUser(#id, #principal))")
     public EntryInfoDto cancel(@PathVariable long id,
-                               @AuthenticationPrincipal AppUserSecurityDto appUserSecurityDto) {
+                               Principal principal) {
         try {
-            return enrollService.freeEntry(id, EntryStatus.CANCELED, appUserSecurityDto.getId());
+            return enrollService.freeEntry(id, EntryStatus.CANCELED);
         } catch (NoSuchIdException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }

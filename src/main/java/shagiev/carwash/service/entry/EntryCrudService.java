@@ -11,6 +11,7 @@ public interface EntryCrudService {
 
     List<EntryInfoDto> getAll();
     List<EntryInfoDto> getAll(Long carBoxId, Date from, Date until, Integer page, Integer countOnPage);
+    List<EntryInfoDto> getAllByUser(long userId, EntryStatus entryStatus, Integer page, Integer pageSize);
     EntryInfoDto getConcrete(long id);
     EntryInfoDto save(EntryRequestDto entry);
     EntryInfoDto update(long id, EntryRequestDto entry);

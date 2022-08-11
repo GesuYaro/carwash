@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import shagiev.carwash.dto.availableinterval.AvailableIntervalDto;
 import shagiev.carwash.dto.entry.EntryInfoDto;
 import shagiev.carwash.dto.entry.EntryRequestDto;
+import shagiev.carwash.dto.entry.EntryUserRequestDto;
 import shagiev.carwash.model.availableinterval.AvailableInterval;
 import shagiev.carwash.model.entry.Entry;
 import shagiev.carwash.model.entry.EntryStatus;
@@ -66,12 +67,12 @@ public class EnrollServiceImpl implements EnrollService {
     }
 
     @Override
-    public EntryInfoDto freeEntry(long entryId, EntryStatus status, long userId) {
+    public EntryInfoDto freeEntry(long entryId, EntryStatus status) {
         return cancelEnrollService.freeEntry(entryId, status);
     }
 
     @Override
-    public EntryInfoDto confirm(long entryId, long userId) {
+    public EntryInfoDto confirm(long entryId) {
         Entry entry = entryRepo.findById(entryId)
                 .orElseThrow(() -> new NoSuchIdException("no such entry id: " + entryId));
         if (entry.getStatus() == EntryStatus.UNCONFIRMED) {
@@ -80,4 +81,38 @@ public class EnrollServiceImpl implements EnrollService {
             throw new IllegalArgumentException("Can't confirm entry");
         }
     }
+
+    @Override
+    public EntryInfoDto update(long entryId, EntryUserRequestDto entryRequestDto) {
+        Entry entry = entryRepo.findById(entryId)
+                .orElseThrow(() -> new NoSuchIdException("no such entry"));
+        if (!entryRequestDto.getDate().equals(entry.getDate()) ||
+        entryRequestDto.getServiceId() != entry.getCarwashService().getId()) {
+            long serviceId = entryRequestDto.getServiceId();
+            Date date = entryRequestDto.getDate();
+            if (!carwashServiceRepo.existsById(serviceId)) {
+                throw new NoSuchIdException("no such service");
+            }
+            Duration baseDuration = carwashServiceCrudService.getConcrete(serviceId).getDuration();
+            List<AvailableInterval> intervals = intervalsService.getIntervalsForConcreteTime(baseDuration, date);
+            if (intervals.isEmpty()) {
+                throw new IllegalArgumentException("No interval for entry");
+            }
+            AvailableInterval biggestInterval = intervals.stream()
+                    .max(Comparator.comparing((i) -> i.getUntil() - i.getFrom()))
+                    .orElseThrow(() -> new IllegalArgumentException("No interval for entry"));
+            Date until = new Date(date.getTime()
+                    + (long) (baseDuration.toMillis() * biggestInterval.getCarBox().getTimeCoefficient()));
+            intervalsService.busyInterval(biggestInterval.getId(), date, until);
+            CarwashService service = carwashServiceRepo.getReferenceById(serviceId);
+
+            EntryRequestDto requestDto = new EntryRequestDto(serviceId, entry.getUser().getId(), date,
+                    biggestInterval.getCarBox().getId(), service.getPrice());
+            EntryInfoDto savedEntry = entryCrudService.update(entryId, requestDto);
+            entryConfirmationService.startConfirmation(savedEntry);
+            return savedEntry;
+        }
+        return null;
+    }
+
 }

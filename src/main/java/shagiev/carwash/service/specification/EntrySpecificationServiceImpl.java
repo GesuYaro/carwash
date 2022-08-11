@@ -1,12 +1,14 @@
 package shagiev.carwash.service.specification;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Service;
 import shagiev.carwash.model.carbox.CarBox_;
 import shagiev.carwash.model.entry.Entry;
 import shagiev.carwash.model.entry.Entry_;
 
 import java.util.Date;
 
+@Service
 public class EntrySpecificationServiceImpl implements EntrySpecificationService {
 
     @Override

@@ -15,6 +15,7 @@ import shagiev.carwash.service.entry.EntryCrudService;
 import shagiev.carwash.service.exceptions.NoSuchIdException;
 
 import javax.validation.Valid;
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -33,9 +34,9 @@ public class CarBoxController {
 
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN') " +
-            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isCarBoxBelongsToOperator(#id, #appUserSecurityDto.id))")
+            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isCarBoxBelongsToOperator(#id, #principal))")
     public CarBoxInfoDto getConcrete(@PathVariable long id,
-                                     @AuthenticationPrincipal AppUserSecurityDto appUserSecurityDto) {
+                                     Principal principal) {
         try {
             return carBoxCrudService.getConcrete(id);
         } catch (NoSuchIdException | IllegalArgumentException e) {
@@ -75,9 +76,9 @@ public class CarBoxController {
 
     @GetMapping("/{id}/entries")
     @PreAuthorize("hasAnyRole('ADMIN') " +
-            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isCarBoxBelongsToOperator(#id, #appUserSecurityDto.id))")
+            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isCarBoxBelongsToOperator(#id, #principal))")
     public List<EntryInfoDto> getEntriesByCarBox(@PathVariable long id,
-                                                 @AuthenticationPrincipal AppUserSecurityDto appUserSecurityDto) {
+                                                 Principal principal) {
         try {
             return entryCrudService.getAllByCarBox(id);
         } catch (NoSuchIdException | IllegalArgumentException e) {
