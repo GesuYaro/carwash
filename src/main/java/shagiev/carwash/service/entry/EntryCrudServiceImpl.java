@@ -2,6 +2,10 @@ package shagiev.carwash.service.entry;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.ConversionService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import shagiev.carwash.dto.entry.EntryInfoDto;
 import shagiev.carwash.dto.entry.EntryRequestDto;
@@ -15,8 +19,10 @@ import shagiev.carwash.repo.CarBoxRepo;
 import shagiev.carwash.repo.CarwashServiceRepo;
 import shagiev.carwash.repo.EntryRepo;
 import shagiev.carwash.service.exceptions.NoSuchIdException;
+import shagiev.carwash.service.specification.EntrySpecificationService;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Service
@@ -28,6 +34,7 @@ public class EntryCrudServiceImpl implements EntryCrudService {
     private final AppUserRepo appUserRepo;
     private final CarwashServiceRepo carwashServiceRepo;
     private final ConversionService conversionService;
+    private final EntrySpecificationService entrySpecificationService;
 
     @Override
     public List<EntryInfoDto> getAll() {
@@ -131,4 +138,50 @@ public class EntryCrudServiceImpl implements EntryCrudService {
         return dtos;
     }
 
+    @Override
+    public List<EntryInfoDto> getAll(Long carBoxId, Date from, Date until, Integer page, Integer countOnPage) {
+        if (!carBoxRepo.existsById(carBoxId)) {
+            throw new NoSuchIdException("no such carBox");
+        }
+        List<EntryInfoDto> dtos = new ArrayList<>();
+        if (page == null) {
+            page = 0;
+        }
+        if (countOnPage == null) {
+            countOnPage = 10;
+        }
+        Pageable pageable = PageRequest.of(page, countOnPage);
+        Specification<Entry> specification = getSpecification(carBoxId, from, until);
+        Page<Entry> result = null;
+        if (specification != null) {
+            result = entryRepo.findAll(specification, pageable);
+        } else {
+            result = entryRepo.findAll(pageable);
+        }
+        result.forEach(entry ->
+                    dtos.add(conversionService.convert(entry, EntryInfoDto.class))
+        );
+        return dtos;
+    }
+
+    private Specification<Entry> getSpecification(Long carBoxId, Date from, Date until) {
+        Specification<Entry> specification = null;
+        if (carBoxId != null) {
+            specification = entrySpecificationService.inCarBox(carBoxId);
+            if (from != null) {
+                specification.and(entrySpecificationService.afterDate(from));
+            }
+            if (until != null) {
+                specification.and(entrySpecificationService.beforeDate(until));
+            }
+        } else if (from != null) {
+            specification = entrySpecificationService.afterDate(from);
+            if (until != null) {
+                specification.and(entrySpecificationService.beforeDate(until));
+            }
+        } else if (until != null) {
+            specification = entrySpecificationService.beforeDate(until);
+        }
+        return specification;
+    }
 }

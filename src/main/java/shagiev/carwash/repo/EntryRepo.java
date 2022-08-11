@@ -6,10 +6,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import shagiev.carwash.model.entry.Entry;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,5 +46,9 @@ public interface EntryRepo extends JpaRepository<Entry, Long>, JpaSpecificationE
     @Transactional(readOnly = true)
     @EntityGraph(attributePaths = {"carBox", "carwashService", "user"})
     List<Entry> findAllByCarBox_Id(Long carBoxId);
+
+    @Transactional(readOnly = true)
+    @Query("select sum(e.price) from Entry e where (e.date between ?1 and ?2) and (e.status = 'FINISHED')")
+    Long sumIncome(Date from, Date until);
 
 }

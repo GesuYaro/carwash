@@ -15,6 +15,7 @@ import shagiev.carwash.model.entry.EntryStatus;
 import shagiev.carwash.service.availableinterval.EnrollService;
 import shagiev.carwash.service.exceptions.NoSuchIdException;
 
+import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -26,7 +27,7 @@ public class EnrollController {
 
     @GetMapping("/available-intervals")
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'USER')")
-    public List<AvailableIntervalDto> getAvailableIntervals(IntervalRequestDto intervalRequestDto) {
+    public List<AvailableIntervalDto> getAvailableIntervals(@Valid IntervalRequestDto intervalRequestDto) {
         return enrollService.getAvailableIntervals(intervalRequestDto.getDate(), intervalRequestDto.getServiceId());
     }
 
@@ -45,7 +46,7 @@ public class EnrollController {
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'USER')")
-    public EntryInfoDto enroll(@RequestBody EntryUserRequestDto entryUserRequestDto,
+    public EntryInfoDto enroll(@RequestBody @Valid EntryUserRequestDto entryUserRequestDto,
                                @AuthenticationPrincipal AppUserSecurityDto appUserSecurityDto) {
         try {
             return enrollService.makeEntry(
@@ -53,6 +54,18 @@ public class EnrollController {
                     entryUserRequestDto.getServiceId(),
                     appUserSecurityDto.getId()
             );
+        } catch (NoSuchIdException | IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
+        }
+    }
+
+    @PutMapping("/finish/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN') " +
+            "|| (hasRole('OPERATOR') && @belongsCheckServiceImpl.isEntryBelongsToOperator(#id, #appUserSecurityDto.id))")
+    public EntryInfoDto finish(@PathVariable long id,
+                               @AuthenticationPrincipal AppUserSecurityDto appUserSecurityDto) {
+        try {
+            return enrollService.freeEntry(id, EntryStatus.FINISHED, appUserSecurityDto.getId());
         } catch (NoSuchIdException | IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage());
         }

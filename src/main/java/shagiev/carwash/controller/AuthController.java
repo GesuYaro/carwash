@@ -12,6 +12,8 @@ import shagiev.carwash.dto.user.AppUserDto;
 import shagiev.carwash.dto.user.AppUserRequestDto;
 import shagiev.carwash.service.user.UserService;
 
+import javax.validation.Valid;
+
 @RestController
 @RequestMapping("/auth")
 @PreAuthorize("isAnonymous()")
@@ -21,7 +23,7 @@ public class AuthController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public AppUserDto register(@RequestBody AppUserRequestDto requestDto) {
+    public AppUserDto register(@RequestBody @Valid AppUserRequestDto requestDto) {
         try {
             return userService.register(requestDto);
         } catch (IllegalArgumentException e) {
@@ -30,7 +32,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public void login(@RequestBody AppUserRequestDto requestDto) {
+    public void login(@RequestBody @Valid AppUserRequestDto requestDto) {
     }
 
 }
